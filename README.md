@@ -16,7 +16,7 @@ More information can be found [here](https://mistermodzz.com/terror/#page-conten
 - Launch Terror Injector and voila.
 
 ## Download
-Terror Injector can be downloaded from [here](https://github.com/MoistyMarley/Terror-Injector/releases/download/1.0.0/TerrorInjector.exe "TerrorInjector.exe").
+Terror Injector can be downloaded from [here](https://github.com/MoistyMarley/Terror-Injector/releases/latest/download/TerrorInjector.exe "TerrorInjector.exe").
 
 ## Requirements
 - [GTA V](https://www.rockstargames.com/games/V)
