@@ -26,4 +26,4 @@ Terror Injector can be downloaded from [here](https://github.com/MoistyMarley/Te
 - [PC Single Player Mods](https://support.rockstargames.com/articles/115009494848/PC-Single-Player-Mods "PC Single Player Mods")
 
 ## License
- [GNU GPLv3](LICENSE "GNU General Public License v3.0")
+ [GNU GPLv3](Terror%20Injector/LICENSE "GNU General Public License v3.0")
