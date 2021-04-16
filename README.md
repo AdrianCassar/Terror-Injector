@@ -1,4 +1,4 @@
-# Terror Injector for GTA 5
+# Terror Injector for GTA V
 ![Terror GUI](https://github.com/MoistyMarley/Terror-Injector/blob/main/Terror_GUI.png "Terror Injector GUI")
 
 Terror Injector is an easy to use tool for injecting the free mod menu Terror.\
