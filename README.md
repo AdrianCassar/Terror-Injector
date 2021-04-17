@@ -4,6 +4,12 @@
 Terror Injector is an easy to use tool for seamlessly injecting the free GTA V Terror mod menu.\
 More information can be found [here](https://mistermodzz.com/terror/#page-content "Terror").
 
+## Download
+Terror Injector can be downloaded from [here](https://github.com/MoistyMarley/Terror-Injector/releases/latest/download/TerrorInjector.exe "TerrorInjector.exe").
+
+# Demonstration
+https://user-images.githubusercontent.com/78108584/115124054-23e5e580-9fb8-11eb-8a14-75f5433dcbde.mp4
+
 ## Features
 - Auto downloading, intsalling and updating of Terror.
 - Determine detected status of Terror.
@@ -12,9 +18,6 @@ More information can be found [here](https://mistermodzz.com/terror/#page-conten
 - Open GTA V.
 - Enter story mode or online.
 - Launch Terror Injector and voila.
-
-## Download
-Terror Injector can be downloaded from [here](https://github.com/MoistyMarley/Terror-Injector/releases/latest/download/TerrorInjector.exe "TerrorInjector.exe").
 
 ## Requirements
 - [GTA V](https://www.rockstargames.com/games/V)
