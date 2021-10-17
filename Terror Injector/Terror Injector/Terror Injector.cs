@@ -1,4 +1,22 @@
-﻿using System;
+﻿/*
+    Terror Injector is an easy-to-use tool for seamlessly injecting the free GTA V Terror mod menu.
+    Copyright (C) 2021 MoistyMarley <https://github.com/MoistyMarley/Terror-Injector/>.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -9,37 +27,23 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Forms;
 using Terror_Injector.Injector;
+using Timer = System.Timers.Timer;
 
 namespace Terror_Injector
 {
-    public enum DetectedStatus
-    {
-        Detected,
-        Unknown,
-        Undetcted,
-    }
-
-    public partial class Terror_Injector : Form
+    public partial class frmTerrorInjector : Form
     {
         private int counter;
-        private readonly string TerrorDocuments = $"{Environment.GetEnvironmentVariable("USERPROFILE")}\\Documents\\Terror";
-        private readonly string TerrorAppdata = $"{ Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\\Terror";
+        private DetectedStatus IsDetected;
 
-        #region WinAPI DllImports
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool SetForegroundWindow(IntPtr hWnd);
+        private Timer timer = new() { Interval = 1000, Enabled = true };
 
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-        #endregion
-
-        public Terror_Injector()
+        public frmTerrorInjector()
         {
             InitializeComponent();
         }
@@ -48,8 +52,7 @@ namespace Terror_Injector
         {
             DllInjectionResult Result;
 
-            Result = Inject_DLL($"{TerrorDocuments}\\{GetTerrorMenuName()}");
-            //Result = DllInjectionResult.InjectionFailed
+            Result = InjectorHelper.StartInjection($"{InjectorHelper.TerrorDocuments}\\{InjectorHelper.GetTerrorMenuName()}");
 
             string caption;
             string title;
@@ -58,8 +61,11 @@ namespace Terror_Injector
             switch (Result)
             {
                 case DllInjectionResult.Success:
-                    caption = "Injection Successful\n\nEnjoy :)";
-                    title = "Injection Successful";
+                    //caption = "Injection Successful\n\nEnjoy :)";
+                    //title = "Injection Successful";
+
+                    caption = string.Empty;
+                    title = string.Empty;
                     sleep = 20000;
                     break;
                 case DllInjectionResult.DllNotFound:
@@ -74,7 +80,6 @@ namespace Terror_Injector
                     title = "Terror Injector";
                     break;
                 case DllInjectionResult.ProcessNotFound:
-                    //\n\nIf GTA5 is running in task manager, try running \"As Administrator\"
                     caption = "Unable to find GTA5 process!";
                     title = "Terror Injector";
                     break;
@@ -87,7 +92,7 @@ namespace Terror_Injector
 
             await Task.Run(async () =>
             {
-                SwitchToGTA5();
+                InjectorHelper.SwitchToGTA5();
 
                 await Task.Delay(sleep);
 
@@ -97,7 +102,7 @@ namespace Terror_Injector
                 {
                     action = new Action(() =>
                     {
-                        timerAnimateText.Stop();
+                        timer.Stop();
                         lblStatus.Text = "Successfully Injected";
                     });
                 }
@@ -105,12 +110,12 @@ namespace Terror_Injector
                 {
                     action = new Action(() =>
                     {
-                        timerAnimateText.Stop();
+                        timer.Stop();
                         lblStatus.Text = "Injection Failed";
 
                         if (Result != DllInjectionResult.InjectionFailed)
                         {
-                            SetForegroundWindow(Process.GetCurrentProcess().MainWindowHandle);
+                            InjectorHelper.SetForegroundWindow(Process.GetCurrentProcess().MainWindowHandle);
                             MessageBox.Show(caption, title, MessageBoxButtons.OK, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
                         }
                     });
@@ -120,7 +125,7 @@ namespace Terror_Injector
 
                 await Task.Delay(3000);
 
-                SwitchToGTA5();
+                InjectorHelper.SwitchToGTA5();
 
                 UIInvoker(this, new Action(() =>
                 {
@@ -129,108 +134,13 @@ namespace Terror_Injector
             });
         }
 
-        private bool IsGTA5Running()
-        {
-            return Process.GetProcessesByName("GTA5").FirstOrDefault(p => p.MainWindowHandle != IntPtr.Zero) != null;
-        }
-
-        private void SwitchToGTA5()
-        {
-            Process GTAV_Process = Process.GetProcessesByName("GTA5").FirstOrDefault(p => p.MainWindowHandle != IntPtr.Zero);
-
-            if (GTAV_Process != null)
-            {
-                ShowWindow(GTAV_Process.MainWindowHandle, 3);
-                SetForegroundWindow(GTAV_Process.MainWindowHandle);
-            }
-        }
-
-        private DllInjectionResult Inject_DLL(string Path)
-        {
-            return Injection.GetInstance.Inject("GTA5", Path);
-        }
-
-        private string GetTerrorMenuName()
-        {
-            string MenuNamePath = $"{TerrorAppdata}\\MenuName.txt";
-            string MenuName = string.Empty;
-
-            if (File.Exists(MenuNamePath))
-            {
-                try
-                {
-                    MenuName = File.ReadAllText(MenuNamePath).Trim();
-                }
-                catch (Exception)
-                {
-
-                }
-            }
-
-            return MenuName;
-        }
-
-        private DetectedStatus IsDetected()
-        {
-            string detectedStatus = GetDetectedStatus();
-            DetectedStatus result;
-
-            switch (detectedStatus)
-            {
-                case "Detected":
-                    result = DetectedStatus.Detected;
-                    break;
-                case "Undetected":
-                    result = DetectedStatus.Undetcted;
-                    break;
-                default:
-                    result = DetectedStatus.Unknown;
-                    break;
-            }
-
-            return result;
-        }
-
-        private string GetDetectedStatus()
-        {
-            return GetWebRequest(new Uri("https://mistermodzzforum.space/authserver/FreeMenuDetected.php"));
-        }
-
-        private string GetWebRequest(Uri url)
-        {
-            string result;
-            WebRequest request = WebRequest.Create(url);
-
-            try
-            {
-                using (WebResponse response = request.GetResponse())
-                using (StreamReader reader = new(response.GetResponseStream()))
-                {
-                    result = reader.ReadToEnd().Trim();
-                }
-            }
-            catch (Exception)
-            {
-
-                result = string.Empty;
-            }
-
-            return result;
-        }
-
-        private string GetLatestVersion()
-        {
-            return GetWebRequest(new Uri("https://mistermodzzforum.space/authserver/Terrormenu.php"));
-        }
+        private delegate void UpdateUI(Control control, Action action);
 
         private void UIInvoker(Control control, Action action)
         {
-            if (control.InvokeRequired)
+            if ((bool)(control?.InvokeRequired))
             {
-                control.Invoke((MethodInvoker)delegate
-                {
-                    action();
-                });
+                control.BeginInvoke(new UpdateUI(UIInvoker), new object[] { control, action });
             }
             else
             {
@@ -238,277 +148,275 @@ namespace Terror_Injector
             }
         }
 
-        private string GetInstalledVersion()
+        private async Task CheckForInjectorUpdates()
         {
-            string version = string.Empty;
-            string versionFile = $"{TerrorAppdata}\\Version.txt";
-
-            if (File.Exists(versionFile))
+            if (await InjectorHelper.UpdateAvailableAsync())
             {
-                version = File.ReadAllText(versionFile).Trim();
+                DialogResult result = await Task.Run(() => MessageBox.Show("An update is available.\n\nDownload Now?", "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Information, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly)); ;
+
+                if (result == DialogResult.Yes)
+                {
+                    GitHubIcon_Click(null, null);
+
+                    this.Close();
+                }
+            }
+        }
+
+        private async Task CheckForMenuUpdates()
+        {
+            UpdateInstallDir();
+            UpdateInstallVer();
+
+            if (await InjectorHelper.IsOnline())
+            {
+                if (!await InjectorTasks.UpdateTerror())
+                {
+                    //Failed to update/install
+                }
+            }
+
+            UpdateInstallDir();
+            UpdateInstallVer();
+        }
+
+        private void SetupEvents()
+        {
+            InjectorTasks.DownloadCompleted += InjectorTasks_OnDownloadCompleted;
+            InjectorTasks.InstallationCompleted += InjectorTasks_OnInstallationCompleted;
+            InjectorTasks.UninstalCompleted += InjectorTasks_OnUninstalCompleted;
+            InjectorTasks.UpdateCompleted += InjectorTasks_OnUpdateCompleted;
+
+            InjectorTasks.BeginDownloading += InjectorTasks_BeginDownloading;
+            InjectorTasks.BeginInstalling += InjectorTasks_BeginInstalling;
+            InjectorTasks.BeginUninstalling += InjectorTasks_BeginUninstalling;
+
+            toolStripBtnClose.Click += ToolStripBtnClose_Click;
+            toolStripBtnUninstall.Click += ToolStripBtnUninstall_Click;
+
+            toolStripBtnClose.MouseEnter += ToolStripBtn_MouseEnter;
+            toolStripBtnUninstall.MouseEnter += ToolStripBtn_MouseEnter;
+
+            toolStripBtnClose.MouseLeave += ToolStripBtn_MouseLeave;
+            toolStripBtnUninstall.MouseLeave += ToolStripBtn_MouseLeave;
+
+            timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+        }
+
+        private async void Terror_Injector_LoadAsync(object sender, EventArgs e)
+        {
+            ToolStripBtns.ClickThrough = true;
+
+            SetupEvents();
+
+            InjectorHelper.SwitchToGTA5();
+
+            UpdatelblDetected();
+
+            await CheckForInjectorUpdates();
+            await CheckForMenuUpdates();
+
+            //if (InjectorHelper.IsTerrorInstalled())
+            //{
+            //    //if(InjectorTasks.CreateMenuFiles())
+            //    //    InjectorTasks.Lock(true);
+            //}
+
+            await WaitForGTAV();
+
+            InjectorHelper.SwitchToGTA5();
+
+            timer.Stop();
+            UpdateStatusLabel("Injecting");
+
+            btnInject.Visible = true;
+        }
+
+        private void BtnInject_Click(object sender, EventArgs e)
+        {
+            timer.Start();
+
+            WarningMessage(IsDetected);
+
+            btnInject.Visible = false;
+        }
+
+        private async void WarningMessage(DetectedStatus IsDetected)
+        {
+            string warningMessage = $"Terror is currently {IsDetected.ToString().ToLower()}, continue injecting?";
+
+            if (IsDetected == DetectedStatus.Unknown)
+            {
+                warningMessage = $"The detection status of {warningMessage}";
+            }
+
+            DialogResult MSGResult;
+            MessageBoxButtons buttons = MessageBoxButtons.YesNo;
+
+            if (InjectorHelper.IsTerrorInjected())
+            {
+                warningMessage = "Terror is currently injected.\n\nOr\n\nTerror is auto-unloaded if you're not connected to the Internet while it's being injected.\n\nHowever, once Terror is injected it will work while completely offline.\n\nIf this is the case then you must restart GTA 5, connect to the Internet and try again.";
+                buttons = MessageBoxButtons.OK;
+            }
+
+            MSGResult = await Task.Run(() => MessageBox.Show(warningMessage, $"Terror Injector", buttons, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly));
+
+            if (MSGResult == DialogResult.No || MSGResult == DialogResult.OK)
+            {
+                //Hmmm
+                UIInvoker(this, new Action(() => { this.Close(); }));
             }
             else
             {
-                if (Directory.Exists(TerrorDocuments))
+                if (InjectorHelper.IsTerrorInstalled())
                 {
-                    string versionFilev2 = Directory.GetFiles(TerrorDocuments).FirstOrDefault((file) => file.StartsWith("Version") && file.EndsWith(".txt"));
-
-                    DirectoryInfo Dir = new DirectoryInfo(TerrorDocuments);
-                    FileInfo File = Dir.GetFiles("*.txt").FirstOrDefault((file) => file.Name.StartsWith("Version"));
-
-                    if (File != null)
-                    {
-                        version = Path.GetFileNameWithoutExtension(File.Name);
-                    }
-                }
-            }
-
-            return version;
-        }
-
-        private bool IsFileLocked(FileInfo file)
-        {
-            try
-            {
-                using (FileStream stream = file.Open(FileMode.Open, FileAccess.Write, FileShare.None))
-                {
-                    stream.Close();
-                }
-            }
-            catch (IOException)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool IsTerrorInjected()
-        {
-            return IsTerrorInstalled() && IsFileLocked(new FileInfo($"{TerrorDocuments}\\{GetTerrorMenuName()}")) && IsGTA5Running();
-        }
-
-        private async Task<bool> CheckMenuVersion()
-        {
-            bool result = false;
-
-            UIInvoker(lblInstallDir, new Action(() =>
-            {
-                if (Directory.Exists(TerrorDocuments))
-                {
-                    lblInstallDir.Text = $"Install Dir: {TerrorDocuments}";
+                    await Task.Run(() => StartInjection());
                 }
                 else
                 {
-                    lblInstallDir.Text = $"Install Dir: N/A";
+                    RestartApplication();
                 }
-            }));
+            }
+        }
 
-            string installedVersion = GetInstalledVersion();
+        private void InjectorTasks_BeginUninstalling(object sender, EventArgs e)
+        {
+            btnInject.Visible = false;
+
+            UpdateStatusLabel("Uninstalling");
+        }
+
+        private void InjectorTasks_BeginInstalling(object sender, EventArgs e)
+        {
+            UpdateStatusLabel("Installing");
+        }
+
+        private void InjectorTasks_BeginDownloading(object sender, EventArgs e)
+        {
+            UpdateStatusLabel("Downloading");
+        }
+
+        private void InjectorTasks_OnUninstalCompleted(object sender, TaskEventArgs e)
+        {
+            UpdateStatusLabel($"{(e.Result ? "Terror Uninstalled" : "Terror Uninstall Failed")}");
+        }
+
+        private void InjectorTasks_OnDownloadCompleted(object sender, TaskEventArgs e)
+        {
+            OnDownloadCompleted(e);
+        }
+
+        private void InjectorTasks_OnInstallationCompleted(object sender, TaskEventArgs e)
+        {
+            OnInstallationCompleted(e);
+        }
+
+        private void InjectorTasks_OnUpdateCompleted(object sender, TaskEventArgs e)
+        {
+            if (e.Result)
+                ToolStripBtns.Visible = true;
+        }
+
+        private async void OnInstallationCompleted(TaskEventArgs e)
+        {
+            if (!e.Result)
+            {
+                UpdateStatusLabel("Restarting");
+
+                string message = "An error occurred restarting.";
+
+                if (InjectorHelper.IsTerrorInjected())
+                    message = $"Terror is currently injected in GTA5 please close GTA5 and try again.\n\n{message}";
+
+                await Task.Run(() => MessageBox.Show(message, $"Terror Injector", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly));
+
+                RestartApplication();
+            }
+        }
+
+        private async void OnDownloadCompleted(TaskEventArgs e)
+        {
+            if (!e.Result)
+            {
+                string title;
+                string msg;
+
+                if (await InjectorHelper.IsOnline())
+                {
+                    UpdateStatusLabel("You're Offline");
+
+                    title = "You're Offline";
+                    msg = "Please connect to the Internet to download Terror.";
+                }
+                else
+                {
+                    UpdateStatusLabel("Servers Offline");
+
+                    title = "Download Servers Offline";
+                    msg = "Terror download servers are offline.\n\nTry again later.";
+                }
+
+                MessageBox.Show(msg, title, MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+
+                UIInvoker(this, new Action(() => { this.Close(); }));
+            }
+        }
+
+        private void UpdateStatusLabel(string Message)
+        {
+            UIInvoker(lblStatus, new Action(() => { lblStatus.Text = Message; }));
+        }
+
+        private async void UpdatelblDetected()
+        {
+            UpdateStatusLabel("Contacting Servers");
+            IsDetected = await InjectorHelper.IsDetected();
+
+            lblDetected.Text = $"{lblDetected.Text} {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(IsDetected.ToString().ToLower())}";
+        }
+
+        private void UpdateInstallDir()
+        {
+            UIInvoker(lblInstallDir, new Action(() =>
+            {
+                if (Directory.Exists(InjectorHelper.TerrorDocuments))
+                    lblInstallDir.Text = $"Install Dir: {InjectorHelper.TerrorDocuments}";
+                else
+                    lblInstallDir.Text = $"Install Dir: N/A";
+            }));
+        }
+
+        private async void UpdateInstallVer()
+        {
+            string installedVersion = InjectorHelper.GetInstalledVersion();
             string latestVersion = string.Empty;
             string versionFile = string.Empty;
 
-            if (CheckDownloadServer())
+            if (await InjectorHelper.CheckDownloadServer())
             {
-                latestVersion = GetLatestVersion();
-                versionFile = $"{TerrorDocuments}\\{latestVersion}.txt";
+                latestVersion = await InjectorHelper.GetLatestVersionAsync();
+                versionFile = $"{InjectorHelper.TerrorDocuments}\\{latestVersion}.txt";
 
-                if (!(result = File.Exists(versionFile)))
-                {
-                    if (await Task.Run(() => DownloadTerror("Downloading")))
-                    {
-                        if (await Task.Run(InstallTerrorAsync))
-                        {
-                            result = await Task.Run(CheckMenuVersion);
-                        }
-                    }
-                }
+                latestVersion = latestVersion.Replace("Version ", string.Empty);
             }
+
+            UIInvoker(lblLatestVersion, new Action(() =>
+            {
+                lblLatestVersion.Text = $"Latest Ver: {(!string.IsNullOrEmpty(latestVersion) ? latestVersion : "N/A")}";
+            }));
 
             UIInvoker(lblInstalledVersion, new Action(() =>
             {
-                if (File.Exists(versionFile))
-                {
-                    lblLatestVersion.Text = $"Latest Ver: {latestVersion.Replace("Version ", string.Empty)}";
-                }
-                else
-                {
-                    lblLatestVersion.Text = $"Latest Ver: N/A";
-                }
-
-                if (!installedVersion.Equals(string.Empty))
-                {
-                    lblInstalledVersion.Text = $"Install Ver: {installedVersion.Replace("Version ", string.Empty)}";
-                }
-                else
-                {
-                    lblInstalledVersion.Text = $"Install Ver: N/A";
-                }
+                lblInstalledVersion.Text = $"Installed Ver: {(!string.IsNullOrEmpty(installedVersion) ? installedVersion : "N/A")}";
             }));
-
-            return result;
         }
 
-        private bool PingWeb(string url) {
-            IPStatus result;
-
-            try
-            {
-                result = new Ping().Send(url).Status;
-            }
-            catch (Exception)
-            {
-                result = IPStatus.TimedOut;
-            }
-
-            return result == IPStatus.Success;
-        }
-
-        private bool CheckDownloadServer()
+        private void OnTimedEvent(object source, ElapsedEventArgs e)
         {
-            return PingWeb("mistermodzzforum.space");
+            AnimateStatus();
         }
 
-        private bool IsOnline()
-        {
-            return PingWeb("google.com");
-        }
-
-        private async void UninstallTerror()
-        {
-            try
-            {
-                if (Directory.Exists(TerrorDocuments))
-                {
-                    Directory.Delete(TerrorDocuments, true);
-                }
-
-                if (Directory.Exists(TerrorAppdata))
-                {
-                    Directory.Delete(TerrorAppdata, true);
-                }
-            }
-            catch (Exception)
-            {
-                await Task.Run(() => MessageBox.Show("Error", $"Terror Injector", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly));
-            }
-        }
-
-        private async Task<bool> DownloadTerror(string caption)
-        {
-            UIInvoker(lblStatus, new Action(() =>
-            {
-                lblStatus.Text = caption;
-            }));
-
-            bool result = false;
-
-            await Task.Run(async () =>
-            {
-                if (CheckDownloadServer())
-                {
-                    await Task.Run(() => UninstallTerror());
-
-                    Uri downloadAddress = new("https://mistermodzzforum.space/Downloads/Terror.zip");
-
-                    using WebClient webClient = new();
-                    try
-                    {
-                        Directory.CreateDirectory(TerrorDocuments);
-                        webClient.DownloadFile(downloadAddress, $"{TerrorDocuments}\\Terror.zip");
-
-                        result = true;
-                    }
-                    catch (Exception)
-                    {
-                        result = false;
-                    }
-                }
-                else
-                {
-                    UIInvoker(lblStatus, new Action(() =>
-                    {
-                        lblStatus.Text = "Servers Offline";
-                    }));
-
-                    MessageBox.Show("Terror download servers are offline.\n\nTry again later.", "Download Servers Offline", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
-
-                    UIInvoker(this, new Action(() =>
-                    {
-                        this.Close();
-                    }));
-                }
-            });
-
-            return result;
-        }
-
-        private async Task<bool> InstallTerrorAsync()
-        {
-            UIInvoker(lblInstallDir, new Action(() =>
-            {
-                lblStatus.Text = "Installing";
-            }));
-
-            bool result = false;
-
-            string TerrorZip = $"{TerrorDocuments}\\Terror.zip";
-
-            if (File.Exists(TerrorZip))
-            {
-                try
-                {
-                    if (!IsTerrorInstalled())
-                    {
-                        Directory.CreateDirectory(TerrorAppdata);
-                        Directory.CreateDirectory(TerrorDocuments);
-                    }
-
-                    ZipFile.ExtractToDirectory(TerrorZip, TerrorDocuments, true);
-                    File.Delete(TerrorZip);
-
-                    File.WriteAllText($"{TerrorAppdata}\\MenuName.txt", "UpP1YrVpA74DW11Y.menu");
-                }
-                catch (Exception)
-                {
-                    UIInvoker(lblStatus, new Action(() =>
-                    {
-                        lblStatus.Text = "Restarting";
-                    }));
-
-                    string message = "An error occurred restarting.";
-
-                    if (IsTerrorInjected())
-                    {
-                        message = $"Terror is currently injected in GTA5 please close GTA5 and try again.\n\n{message}";
-                    }
-
-                    await Task.Run(() => MessageBox.Show(message, $"Terror Injector", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly));
-
-                    RestartApplication();
-                }
-
-                result = true;
-            }
-
-            return result;
-        }
-
-        private bool IsTerrorInstalled()
-        {
-            bool result;
-
-            if (result = Directory.Exists(TerrorDocuments))
-            {
-                int count = Directory.GetDirectories(TerrorDocuments).Length + Directory.GetFiles(TerrorDocuments).Length;
-
-                result = count >= 6 && File.Exists($"{TerrorDocuments}\\{GetTerrorMenuName()}");
-            }
-
-            return result;
-        }
-
-        private void timerAnimateText_Tick(object sender, EventArgs e)
+        private void AnimateStatus()
         {
             counter++;
 
@@ -520,70 +428,90 @@ namespace Terror_Injector
             if (counter == 4)
                 counter = 0;
 
-            lblStatus.Text = $"{lblStatus.Text.Split('.')[0]}{dots}";
+            UpdateStatusLabel($"{lblStatus.Text.Split('.')[0]}{dots}");
         }
 
-        private async void Terror_Injector_LoadAsync(object sender, EventArgs e)
+        private async Task WaitForGTAV()
         {
-            SwitchToGTA5();
+            UpdateStatusLabel("Waiting for GTA5");
 
-            lblStatus.Text = "Contacting Servers";
-            DetectedStatus isDetected = await Task.Run(() => IsDetected());
-
-            lblDetected.Text = $"{lblDetected.Text} {CultureInfo.CurrentCulture.TextInfo.ToTitleCase(isDetected.ToString().ToLower())}";
-
-            if (!IsTerrorInstalled())
+            while (!InjectorHelper.IsGTA5Running())
             {
-                if (await Task.Run(() => DownloadTerror("Downloading")))
-                {
-                    await Task.Run(InstallTerrorAsync);
-                }
+                await Task.Delay(5000);
             }
-
-            await Task.Run(CheckMenuVersion);
-
-            lblStatus.Text = "Injecting";
-            string warningMessage = $"Terror is currently {isDetected.ToString().ToLower()}, continue injecting?";
-
-            if (isDetected == DetectedStatus.Unknown)
-            {
-                warningMessage = $"The detection status of {warningMessage}";
-            }
-
-            DialogResult MSGResult;
-            MessageBoxButtons buttons = MessageBoxButtons.YesNo;
-
-            if (IsTerrorInjected())
-            {
-                warningMessage = "Terror is already injected.\n\nOr\n\nTerror is auto-unloaded if you're not connected to the Internet while it's being injected.\n\nHowever, once Terror is injected it will work while completely offline.\n\nIf this is the case then you must restart GTA 5, connect to the Internet and try again.";
-                buttons = MessageBoxButtons.OK;
-            }
-
-            MSGResult = await Task.Run(() => MessageBox.Show(warningMessage, $"Terror Injector", buttons, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button2, MessageBoxOptions.DefaultDesktopOnly));
-
-            if (MSGResult == DialogResult.No || MSGResult == DialogResult.OK)
-            {
-                this.Close();
-            }
-            else
-            {
-                if (IsTerrorInstalled())
-                {
-                    await Task.Run(() => StartInjection());
-                }
-                else
-                {
-                    RestartApplication();
-                }
-            }
-
-            timerAnimateText.Start();
         }
 
         private void RestartApplication()
         {
             Application.Restart();
             Environment.Exit(0);
+        }
+
+        private void ToolStripBtnUninstall_Click(object sender, EventArgs e)
+        {
+            timer.Stop();
+
+            if (!InjectorHelper.IsTerrorInjected())
+            {
+                InjectorTasks.UninstallTerror();
+
+                UpdateInstallDir();
+                UpdateInstallVer();
+            }
+            else
+            {
+                btnInject.Visible = false;
+                UpdateStatusLabel("Terror currently injected.");
+            }
+        }
+
+        private void ToolStripBtnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void BtnInject_MouseEnter(object sender, EventArgs e)
+        {
+            btnInject.ForeColor = Color.Green;
+        }
+
+        private void BtnInject_MouseLeave(object sender, EventArgs e)
+        {
+            btnInject.ForeColor = Color.Red;
+        }
+
+        private void ToolStripBtn_MouseEnter(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.Hand;
+        }
+
+        private void ToolStripBtn_MouseLeave(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.Default;
+        }
+
+        private void GitHubIcon_Click(object sender, EventArgs e)
+        {
+            Process.Start("explorer", "https://github.com/MoistyMarley/Terror-Injector");
+        }
+
+        #region WinAPI DllImports
+            public const int WM_NCLBUTTONDOWN = 0xA1;
+            public const int HT_CAPTION = 0x2;
+
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            public static extern bool ReleaseCapture();
+        #endregion
+
+        private void DragForm_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ReleaseCapture();
+                SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            }
         }
     }
 }

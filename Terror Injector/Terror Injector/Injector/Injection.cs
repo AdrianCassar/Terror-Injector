@@ -54,14 +54,6 @@ namespace Terror_Injector.Injector
 
         private unsafe bool bInject(uint pToBeInjected, string sDllPath)
         {
-            //IntPtr intPtr = OpenProcess(1082u, 1, pToBeInjected);
-            //IntPtr procAddress = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
-            //IntPtr intPtr2 = VirtualAllocEx(intPtr, (IntPtr)(void*)null, (IntPtr)sDllPath.Length, 12288u, 64u);
-            //byte[] bytes = Encoding.ASCII.GetBytes(sDllPath);
-            //WriteProcessMemory(intPtr, intPtr2, bytes, (uint)bytes.Length, 0);
-            //CreateRemoteThread(intPtr, (IntPtr)(void*)null, 0u, procAddress, intPtr2, 0u, (IntPtr)(void*)null);
-            //CloseHandle(intPtr);
-
             bool Result = false;
             string caption = string.Empty;
 
