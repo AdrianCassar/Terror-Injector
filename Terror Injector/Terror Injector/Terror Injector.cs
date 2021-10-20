@@ -61,9 +61,6 @@ namespace Terror_Injector
             switch (Result)
             {
                 case DllInjectionResult.Success:
-                    //caption = "Injection Successful\n\nEnjoy :)";
-                    //title = "Injection Successful";
-
                     caption = string.Empty;
                     title = string.Empty;
                     sleep = 20000;
@@ -127,8 +124,21 @@ namespace Terror_Injector
 
                 InjectorHelper.SwitchToGTA5();
 
-                UIInvoker(this, new Action(() =>
+                UIInvoker(this, new Action(async () =>
                 {
+                    if (Result == DllInjectionResult.Success)
+                    {
+                        if (InjectorTasks.CreateLogin())
+                        {
+                            this.Hide();
+
+                            await Task.Delay(TimeSpan.FromSeconds(60));
+                            InjectorTasks.DeleteLogin();
+
+                            Debug.WriteLine("InstallerLogin: " + File.Exists(InjectorHelper.InstallerLogin).ToString());
+                        }
+                    }
+
                     this.Close();
                 }));
             });
@@ -210,6 +220,8 @@ namespace Terror_Injector
             SetupEvents();
 
             InjectorHelper.SwitchToGTA5();
+
+            InjectorTasks.DeleteLogin();
 
             UpdatelblDetected();
 
@@ -467,6 +479,8 @@ namespace Terror_Injector
 
         private void ToolStripBtnClose_Click(object sender, EventArgs e)
         {
+            InjectorTasks.DeleteLogin();
+
             this.Close();
         }
 
@@ -496,13 +510,13 @@ namespace Terror_Injector
         }
 
         #region WinAPI DllImports
-            public const int WM_NCLBUTTONDOWN = 0xA1;
-            public const int HT_CAPTION = 0x2;
+        public const int WM_NCLBUTTONDOWN = 0xA1;
+        public const int HT_CAPTION = 0x2;
 
-            [System.Runtime.InteropServices.DllImport("user32.dll")]
-            public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-            [System.Runtime.InteropServices.DllImport("user32.dll")]
-            public static extern bool ReleaseCapture();
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        public static extern bool ReleaseCapture();
         #endregion
 
         private void DragForm_MouseDown(object sender, MouseEventArgs e)

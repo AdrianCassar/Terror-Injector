@@ -131,7 +131,7 @@ namespace Terror_Injector.Injector
         /// Install Terror
         /// </summary>
         /// <returns>True if installation was successful, otherwise false.</returns>
-        public static Task<bool> InstallTerrorAsync()
+        public static async Task<bool> InstallTerrorAsync()
         {
             BeginInstalling(null, EventArgs.Empty);
 
@@ -149,7 +149,7 @@ namespace Terror_Injector.Injector
                     ZipFile.ExtractToDirectory(TerrorZip, InjectorHelper.TerrorDocuments, true);
                     File.Delete(TerrorZip);
 
-                    result = CreateMenuFiles() && LockFiles(true);
+                    result = await CreateMenuFilesAsync() && LockFiles(true);
                 }
                 catch (Exception)
                 {
@@ -159,16 +159,16 @@ namespace Terror_Injector.Injector
 
             InstallationCompleted(null, new TaskEventArgs() { Result = result });
 
-            return Task.FromResult(result);
+            return result;
         }
 
         /// <summary>
         ///
         /// </summary>
         /// <returns></returns>
-        public static bool CreateMenuFiles()
+        public static async Task<bool> CreateMenuFilesAsync()
         {
-            bool result;
+            bool result = true;
 
             try
             {
@@ -182,17 +182,38 @@ namespace Terror_Injector.Injector
                     File.WriteAllText(InjectorHelper.MenuName, "UpP1YrVpA74DW11Y.menu\r\n");
                 }
 
-                if (!File.Exists(InjectorHelper.InjectionKey))
-                {
-                    File.WriteAllText(InjectorHelper.InjectionKey, "KpPWBO2JrpgzGwpDx\r\n");
-                }
+                string key = await InjectorHelper.GetWebRequest(new Uri("https://raw.githubusercontent.com/MoistyMarley/Terror-Injector/main/Terror%20Injector/InjectionKey"));
 
-                if (!File.Exists(InjectorHelper.InstallerLogin))
+                if (!key.Equals(string.Empty))
                 {
-                    File.WriteAllText(InjectorHelper.InstallerLogin, "Username: test\r\nPassword: test\r\n");
-                }
+                    if (!File.Exists(InjectorHelper.InjectionKey))
+                    {
+                        File.WriteAllText(InjectorHelper.InjectionKey, $"{key}\r\n");
+                    }
+                    else
+                    {
+                        string savedKey = File.ReadAllText(InjectorHelper.InjectionKey);
 
-                result = true;
+                        if (!savedKey.Equals($"{key}\r\n"))
+                        {
+                            FileAccessControl Key = new(new FileInfo(InjectorHelper.InjectionKey));
+
+                            bool IsLocked = Key.IsLocked();
+
+                            if (IsLocked)
+                                Key.ToggleLock();
+
+                            File.WriteAllText(InjectorHelper.InjectionKey, $"{key}\r\n");
+
+                            if (IsLocked)
+                                Key.ToggleLock();
+                        }
+                    }
+                }
+                else
+                {
+                    result = false;
+                }
             }
             catch (Exception)
             {
@@ -200,6 +221,53 @@ namespace Terror_Injector.Injector
             }
 
             return result;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <returns></returns>
+        public static bool CreateLogin()
+        {
+            try
+            {
+                if (!File.Exists(InjectorHelper.InstallerLogin))
+                {
+                    File.WriteAllText(InjectorHelper.InstallerLogin, "Username: test\r\nPassword: test\r\n");
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <returns></returns>
+        public static bool DeleteLogin()
+        {
+            try
+            {
+                if (File.Exists(InjectorHelper.InstallerLogin))
+                {
+                    FileAccessControl Login = new(new FileInfo(InjectorHelper.InstallerLogin));
+
+                    if (Login.IsLocked())
+                        Login.ToggleLock();
+
+                    File.Delete(InjectorHelper.InstallerLogin);
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -228,7 +296,7 @@ namespace Terror_Injector.Injector
             //If installed check temp files.
             if (result)
             {
-                if(CreateMenuFiles())
+                if (await CreateMenuFilesAsync())
                     LockFiles(true);
             }
 
@@ -295,10 +363,7 @@ namespace Terror_Injector.Injector
             List<FileAccessControl> LockedFiles = new();
 
             FileAccessControl Key = new(new FileInfo(InjectorHelper.InjectionKey));
-            FileAccessControl Login = new(new FileInfo(InjectorHelper.InstallerLogin));
-
             LockedFiles.Add(Key);
-            LockedFiles.Add(Login);
 
             foreach (FileAccessControl file in LockedFiles)
             {

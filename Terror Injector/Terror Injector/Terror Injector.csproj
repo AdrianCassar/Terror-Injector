@@ -11,8 +11,8 @@
     <Configurations>Debug;Release;Release x64</Configurations>
     <Platforms>AnyCPU;x64</Platforms>
     <Version>1.1.0</Version>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
+    <AssemblyVersion>2.0.0.1</AssemblyVersion>
+    <FileVersion>2.0.0.1</FileVersion>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
