@@ -295,7 +295,8 @@ namespace Terror_Injector
             {
                 string responseBody = await GetWebRequest(new Uri("https://api.github.com/repos/MoistyMarley/Terror-Injector/releases/latest"));
 
-                if (!string.IsNullOrEmpty(responseBody)) {
+                if (!string.IsNullOrEmpty(responseBody))
+                {
                     value = JsonValue.Parse(responseBody);
                     LatestVer = new(value["tag_name"]);
                 }

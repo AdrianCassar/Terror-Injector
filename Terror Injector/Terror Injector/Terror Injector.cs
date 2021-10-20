@@ -95,12 +95,16 @@ namespace Terror_Injector
 
                 Action action;
 
+                bool LoginCreated = false;
+
                 if (Result == DllInjectionResult.Success)
                 {
                     action = new Action(() =>
                     {
                         timer.Stop();
                         lblStatus.Text = "Successfully Injected";
+
+                        LoginCreated = InjectorTasks.CreateLogin();
                     });
                 }
                 else
@@ -128,7 +132,7 @@ namespace Terror_Injector
                 {
                     if (Result == DllInjectionResult.Success)
                     {
-                        if (InjectorTasks.CreateLogin())
+                        if (LoginCreated)
                         {
                             this.Hide();
 
