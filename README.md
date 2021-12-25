@@ -1,14 +1,22 @@
 <div align="center">
     <h1>Terror Injector for GTA V</h1>
 
-   <img alt="GitHub license" src="https://img.shields.io/github/license/MoistyMarley/Terror-Injector?label=license&style=for-the-badge">
-   <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/MoistyMarley/Terror-Injector/total?style=for-the-badge">
-   <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/MoistyMarley/Terror-Injector?style=for-the-badge">
- 
-   <p>
-       <br>
-       <img alt="Terror Injector GUI" src="https://github.com/MoistyMarley/Terror-Injector/blob/main/Terror_GUI.png?raw=true">
-   </p>
+<a href="https://github.com/MoistyMarley/Terror-Injector/blob/main/LICENSE/">
+    <img alt="GitHub license" src="https://img.shields.io/github/license/MoistyMarley/Terror-Injector?label=license&style=for-the-badge">
+</a>
+
+<a href="https://github.com/MoistyMarley/Terror-Injector/releases/">
+    <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/MoistyMarley/Terror-Injector/total?style=for-the-badge">
+</a>
+
+<a href="https://github.com/MoistyMarley/Terror-Injector/releases/latest/">
+    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/MoistyMarley/Terror-Injector?style=for-the-badge">
+</a>
+
+<p>
+   <br>
+   <img alt="Terror Injector GUI" src="https://github.com/MoistyMarley/Terror-Injector/blob/main/Terror_GUI.png?raw=true">
+</p>
 </div>
 
 <!-- ![Terror GUI](https://github.com/MoistyMarley/Terror-Injector/blob/main/Terror_GUI.png?raw=true "Terror Injector GUI") -->
@@ -42,4 +50,4 @@ https://user-images.githubusercontent.com/78108584/137633682-71295db8-f2dc-42f8-
 - [PC Single Player Mods](https://support.rockstargames.com/articles/115009494848/PC-Single-Player-Mods "PC Single Player Mods")
 
 ## License
- [GNU GPLv3](/LICENSE "GNU General Public License v3.0")
+ [GNU GPLv3](https://github.com/MoistyMarley/Terror-Injector/blob/main/LICENSE/ "GNU General Public License v3.0")
