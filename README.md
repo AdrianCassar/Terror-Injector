@@ -1,25 +1,13 @@
 <div align="center">
-    <h1>Terror Injector for GTA V</h1>
+    
+# Terror Injector for GTA V
 
-<a href="https://github.com/MoistyMarley/Terror-Injector/blob/main/LICENSE/">
-    <img alt="GitHub license" src="https://img.shields.io/github/license/MoistyMarley/Terror-Injector?label=license&style=for-the-badge">
-</a>
-
-<a href="https://github.com/MoistyMarley/Terror-Injector/releases/">
-    <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/MoistyMarley/Terror-Injector/total?style=for-the-badge">
-</a>
-
-<a href="https://github.com/MoistyMarley/Terror-Injector/releases/latest/">
-    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/MoistyMarley/Terror-Injector?style=for-the-badge">
-</a>
-
-<p>
-   <br>
-   <img alt="Terror Injector GUI" src="https://github.com/MoistyMarley/Terror-Injector/blob/main/Terror_GUI.png?raw=true">
-</p>
+[![License](https://img.shields.io/github/license/MoistyMarley/Terror-Injector?label=license&style=for-the-badge "License")](https://github.com/MoistyMarley/Terror-Injector/blob/main/LICENSE/ "License")
+[![All Releases](https://img.shields.io/github/downloads/MoistyMarley/Terror-Injector/total?style=for-the-badge "All Releases")](https://github.com/MoistyMarley/Terror-Injector/releases/ "All Releases")
+[![Latest](https://img.shields.io/github/v/release/MoistyMarley/Terror-Injector?style=for-the-badge "Latest")](https://github.com/MoistyMarley/Terror-Injector/releases/latest/ "Latest")
+    
+![Terror GUI](https://github.com/MoistyMarley/Terror-Injector/blob/main/Terror_GUI.png?raw=true "Terror Injector GUI")
 </div>
-
-<!-- ![Terror GUI](https://github.com/MoistyMarley/Terror-Injector/blob/main/Terror_GUI.png?raw=true "Terror Injector GUI") -->
 
 Terror Injector is an easy-to-use tool for seamlessly injecting the free GTA V Terror mod menu.\
 More information can be found [here](https://mistermodzz.com/terror/#page-content "Terror").
