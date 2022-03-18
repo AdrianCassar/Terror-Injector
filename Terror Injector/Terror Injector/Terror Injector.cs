@@ -41,7 +41,9 @@ namespace Terror_Injector
         private int counter;
         private DetectedStatus IsDetected;
 
-        private Timer timer = new() { Interval = 1000, Enabled = true };
+        private readonly Timer timer = new() { Interval = 1000, Enabled = true };
+
+        private bool IsChangingKey;
 
         public frmTerrorInjector()
         {
@@ -52,18 +54,40 @@ namespace Terror_Injector
         {
             DllInjectionResult Result;
 
-            Result = InjectorHelper.StartInjection($"{InjectorHelper.TerrorDocuments}\\{InjectorHelper.GetTerrorMenuName()}");
+            int SelectedIndex = 0;
+
+            this.Invoke((Action)(() => {
+                SelectedIndex = menuSelect.SelectedIndex;
+            }));
+
+            //InjectorTasks.CreateMenuFiles();
+
+            if (SelectedIndex == 0)
+            {
+                Result = InjectorHelper.StartInjection($"{InjectorHelper.TerrorDocuments}\\{InjectorHelper.GetTerrorMenuName()}");
+            }
+            else
+            {
+                //5LsNU8sd8BFwKa.5LsNU
+                Result = InjectorHelper.StartInjection($"{InjectorHelper.MisterModzZDocuments}\\{InjectorHelper.GetMisterModzZMenuName()}");
+                //InjectorTasks.CreateLogin();
+            }
 
             string caption;
             string title;
-            int sleep = 3000;
+            int sleep = 0;
 
             switch (Result)
             {
                 case DllInjectionResult.Success:
                     caption = string.Empty;
                     title = string.Empty;
-                    sleep = 20000;
+
+                    if (SelectedIndex == 0)
+                    {
+                        sleep = 20000;
+                    }
+
                     break;
                 case DllInjectionResult.DllNotFound:
                     DialogResult MSGResult = await Task.Run(() => MessageBox.Show("Terror Menu not found.\n\nWould you like to download and install Terror?", "Terror Injector", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly));
@@ -89,13 +113,31 @@ namespace Terror_Injector
 
             await Task.Run(async () =>
             {
-                InjectorHelper.SwitchToGTA5();
-
-                await Task.Delay(sleep);
-
                 Action action;
 
                 bool LoginCreated = false;
+
+                bool created = await InjectorTasks.CreateAccount();
+
+                bool installed = false;
+
+                if (created) {
+                    Debug.WriteLine("Created Account");
+
+                    installed = await InjectorTasks.CreateMenuFilesAsync();
+                }
+
+                if (installed)
+                    Debug.WriteLine("Created Menu Files");
+
+                bool loggedin = await InjectorTasks.Menu_Login();
+
+                if (loggedin)
+                    Debug.WriteLine("Logged into Account");
+
+                InjectorHelper.SwitchToGTA5();
+
+                await Task.Delay(sleep);
 
                 if (Result == DllInjectionResult.Success)
                 {
@@ -104,11 +146,17 @@ namespace Terror_Injector
                         timer.Stop();
                         lblStatus.Text = "Successfully Injected";
 
-                        LoginCreated = InjectorTasks.CreateLogin();
+                        if (loggedin)
+                            LoginCreated = InjectorTasks.CreateLogin();
                     });
                 }
                 else
                 {
+                    bool deleted = await InjectorTasks.DeleteAccountAsync();
+
+                    if (deleted)
+                        Debug.WriteLine("Deleted Account");
+
                     action = new Action(() =>
                     {
                         timer.Stop();
@@ -132,12 +180,17 @@ namespace Terror_Injector
                 {
                     if (Result == DllInjectionResult.Success)
                     {
-                        if (LoginCreated)
+                        if (loggedin && LoginCreated)
                         {
                             this.Hide();
 
                             await Task.Delay(TimeSpan.FromSeconds(60));
                             InjectorTasks.DeleteLogin();
+
+                            bool deleted = await InjectorTasks.DeleteAccountAsync();
+
+                            if(deleted)
+                                Debug.WriteLine("Deleted Account");
 
                             Debug.WriteLine("InstallerLogin: " + File.Exists(InjectorHelper.InstallerLogin).ToString());
                         }
@@ -198,7 +251,7 @@ namespace Terror_Injector
         {
             InjectorTasks.DownloadCompleted += InjectorTasks_OnDownloadCompleted;
             InjectorTasks.InstallationCompleted += InjectorTasks_OnInstallationCompleted;
-            InjectorTasks.UninstalCompleted += InjectorTasks_OnUninstalCompleted;
+            InjectorTasks.UninstallCompleted += InjectorTasks_OnUninstallCompleted;
             InjectorTasks.UpdateCompleted += InjectorTasks_OnUpdateCompleted;
 
             InjectorTasks.BeginDownloading += InjectorTasks_BeginDownloading;
@@ -215,10 +268,15 @@ namespace Terror_Injector
             toolStripBtnUninstall.MouseLeave += ToolStripBtn_MouseLeave;
 
             timer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
+
+            //InjectorHelper.GetModuleVersionId();
+            //Debug.WriteLine(InjectorHelper.BinaryHash());
         }
 
         private async void Terror_Injector_LoadAsync(object sender, EventArgs e)
         {
+            menuSelect.SelectedIndex = 0;
+
             ToolStripBtns.ClickThrough = true;
 
             SetupEvents();
@@ -238,23 +296,48 @@ namespace Terror_Injector
             //    //    InjectorTasks.Lock(true);
             //}
 
+            if (InjectorHelper.IsTerrorInstalled()) {
+                btnChangeOpenKey.Visible = true;
+            }
+
+            //if (InjectorHelper.IsMisterModzZInstalled()) {}
+
+            menuSelect.Visible = true;
+
             await WaitForGTAV();
 
             InjectorHelper.SwitchToGTA5();
 
             timer.Stop();
-            UpdateStatusLabel("Injecting");
 
-            btnInject.Visible = true;
+            if (!IsChangingKey)
+                btnInject.Visible = true;
+                this.AcceptButton = btnInject;
         }
 
-        private void BtnInject_Click(object sender, EventArgs e)
+        private async void BtnInject_Click(object sender, EventArgs e)
         {
+            counter = 0;
             timer.Start();
 
-            WarningMessage(IsDetected);
+            btnChangeOpenKey.Visible = false;
+            this.KeyPreview = false;
 
             btnInject.Visible = false;
+            menuSelect.Visible = false;
+
+            if (menuSelect.SelectedItem.ToString() == "MisterModzZ v2")
+            {
+                if (await InjectorTasks.DownloadMisterModzZAsync())
+                    if (await InjectorTasks.InstallMisterModzZAsync())
+                    {
+                        Debug.WriteLine("MisterModzZ Installed Success");
+                    }
+            }
+
+            UpdateStatusLabel("Injecting");
+
+            WarningMessage(IsDetected);
         }
 
         private async void WarningMessage(DetectedStatus IsDetected)
@@ -284,7 +367,7 @@ namespace Terror_Injector
             }
             else
             {
-                if (InjectorHelper.IsTerrorInstalled())
+                if (InjectorHelper.IsTerrorInstalled() || InjectorHelper.IsMisterModzZInstalled())
                 {
                     await Task.Run(() => StartInjection());
                 }
@@ -312,9 +395,19 @@ namespace Terror_Injector
             UpdateStatusLabel("Downloading");
         }
 
-        private void InjectorTasks_OnUninstalCompleted(object sender, TaskEventArgs e)
+        private void InjectorTasks_OnUninstallCompleted(object sender, TaskEventArgs e)
         {
-            UpdateStatusLabel($"{(e.Result ? "Terror Uninstalled" : "Terror Uninstall Failed")}");
+            switch (menuSelect.SelectedItem.ToString())
+            {
+                case "Terror":
+                    UpdateStatusLabel($"{(e.Result ? "Terror Uninstalled" : "Terror Uninstall Failed")}");
+                    break;
+                case "MisterModzZ v2":
+                    UpdateStatusLabel($"{(e.Result ? "MisterModzZ Uninstalled" : "MisterModzZ Uninstall Failed")}");
+                    break;
+                default:
+                    break;
+            }
         }
 
         private void InjectorTasks_OnDownloadCompleted(object sender, TaskEventArgs e)
@@ -329,8 +422,8 @@ namespace Terror_Injector
 
         private void InjectorTasks_OnUpdateCompleted(object sender, TaskEventArgs e)
         {
-            if (e.Result)
-                ToolStripBtns.Visible = true;
+            //if (e.Result)
+            ToolStripBtns.Visible = true;
         }
 
         private async void OnInstallationCompleted(TaskEventArgs e)
@@ -354,27 +447,34 @@ namespace Terror_Injector
         {
             if (!e.Result)
             {
+                string label;
                 string title;
                 string msg;
 
-                if (await InjectorHelper.IsOnline())
+                if (!await InjectorHelper.IsOnline())
                 {
-                    UpdateStatusLabel("You're Offline");
-
+                    label = "You're Offline";
                     title = "You're Offline";
                     msg = "Please connect to the Internet to download Terror.";
                 }
                 else
                 {
-                    UpdateStatusLabel("Servers Offline");
-
+                    label = "Servers Offline";
                     title = "Download Servers Offline";
                     msg = "Terror download servers are offline.\n\nTry again later.";
                 }
 
-                MessageBox.Show(msg, title, MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+                timer.Stop();
+                UpdateStatusLabel(label);
 
-                UIInvoker(this, new Action(() => { this.Close(); }));
+                await Task.Delay(500);
+
+                if (!InjectorHelper.IsTerrorInstalled())
+                {
+                    MessageBox.Show(msg, title, MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+
+                    this.Close();
+                }
             }
         }
 
@@ -396,7 +496,7 @@ namespace Terror_Injector
             UIInvoker(lblInstallDir, new Action(() =>
             {
                 if (Directory.Exists(InjectorHelper.TerrorDocuments))
-                    lblInstallDir.Text = $"Install Dir: {InjectorHelper.TerrorDocuments}";
+                    lblInstallDir.Text = $"Install Dir: Documents\\Terror";
                 else
                     lblInstallDir.Text = $"Install Dir: N/A";
             }));
@@ -465,19 +565,71 @@ namespace Terror_Injector
 
         private void ToolStripBtnUninstall_Click(object sender, EventArgs e)
         {
-            timer.Stop();
+            btnInject.Visible = false;
 
-            if (!InjectorHelper.IsTerrorInjected())
+            bool uninstalled = false;
+
+            switch (menuSelect.SelectedItem.ToString())
             {
-                InjectorTasks.UninstallTerror();
+                case "Terror":
+                    if (InjectorHelper.IsTerrorInstalled())
+                    {
+                        timer.Stop();
 
-                UpdateInstallDir();
-                UpdateInstallVer();
+                        if (!InjectorHelper.IsTerrorInjected())
+                        {
+                            if (uninstalled = InjectorTasks.UninstallTerror()) {
+                                UpdateInstallDir();
+                                UpdateInstallVer();
+                            }
+                        }
+                        else
+                            UpdateStatusLabel("Terror currently injected.");
+                    }
+                    break;
+                case "MisterModzZ v2":
+                    if (InjectorHelper.IsMisterModzZInstalled())
+                    {
+                        timer.Stop();
+
+                        if (!InjectorHelper.IsMisterModzZInjected())
+                            uninstalled = InjectorTasks.UninstallMisterModzZ();
+                        else
+                            UpdateStatusLabel("MisterModzZ currently injected.");
+                    }
+                    break;
             }
-            else
+
+            if(uninstalled)
             {
                 btnInject.Visible = false;
-                UpdateStatusLabel("Terror currently injected.");
+
+                if (InjectorHelper.IsTerrorInstalled() || InjectorHelper.IsMisterModzZInstalled()) {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(8));
+
+                        if (InjectorHelper.IsGTA5Running())
+                        {
+                            this.Invoke((Action)(() => {
+                                btnInject.Visible = true;
+                            }));
+                        } else {
+                            UpdateStatusLabel("Waiting for GTA5");
+
+                            counter = 0;
+                            timer.Start();
+                        }
+
+                        this.Invoke((Action)(() => {
+                            menuSelect.SelectedIndex = InjectorHelper.IsTerrorInstalled() ? 0 : 1;
+                        }));
+                    });
+                } else
+                {
+                    btnInject.Visible = false;
+                    btnChangeOpenKey.Visible = false;
+                }
             }
         }
 
@@ -529,6 +681,152 @@ namespace Terror_Injector
             {
                 ReleaseCapture();
                 SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+            }
+        }
+        
+        private void btnChangeOpenKey_Click(object sender, EventArgs e)
+        {
+            ToggleChangeKey();
+        }
+
+        private async void frmTerrorInjector_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (IsChangingKey)
+            {
+                //https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.keys
+                bool NumPad = e.KeyValue >= (int)Keys.NumPad0 && e.KeyValue <= (int)Keys.NumPad9;
+                bool Functions = e.KeyValue >= (int)Keys.F1 && e.KeyValue <= (int)Keys.F24;
+                bool Digits = e.KeyValue >= (int)Keys.D0 && e.KeyValue <= (int)Keys.D9;
+                bool Asterisk = e.KeyValue == (int)Keys.Multiply;
+
+                bool KeyChanged = NumPad || Functions || Digits || Asterisk;
+
+                if (KeyChanged)
+                    UpdateStatusLabel(Asterisk ? "*" : e.KeyCode.ToString());
+
+                IsChangingKey = KeyChanged;
+
+                if (IsChangingKey)
+                {
+                    await Task.Delay(1000);
+                    bool IsSet = InjectorHelper.SetOpenKey(e.KeyValue);
+
+                    if (!IsSet)
+                        MessageBox.Show("Failed to change key. \n\n try uninstalling");
+
+                    ToggleChangeKey();
+                }
+            }
+        }
+
+        private void ToggleChangeKey() {
+            //bool coll = lblInstallDir.Bounds.IntersectsWith(ToolStripBtns.Bounds);
+            
+            if (IsChangingKey)
+            {
+                btnChangeOpenKey.Text = "Open Key";
+
+                menuSelect.Visible = true;
+
+                if (InjectorHelper.IsGTA5Running())
+                {
+                    btnInject.Visible = true;
+                    this.AcceptButton = btnInject;
+
+                    UpdateStatusLabel("");
+                }
+                else
+                {
+                    UpdateStatusLabel("Waiting for GTA5");
+
+                    counter = 0;
+                    timer.Start();
+                }
+            }
+            else
+            {
+                btnChangeOpenKey.Text = "Back";
+
+                timer.Stop();
+
+                btnInject.Visible = false;
+                menuSelect.Visible = false;
+
+                UpdateStatusLabel("Keys: F1-F22, NumPad, 0-9, or *");
+            }
+
+            IsChangingKey = !IsChangingKey;
+        }
+
+        private void lblStatus_SizeChanged(object sender, EventArgs e)
+        {
+            lblStatus.Left = (this.ClientSize.Width - lblStatus.Size.Width) / 2;
+            lblStatus.Top = (this.ClientSize.Height - lblStatus.Size.Height) / 2;
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams handleParam = base.CreateParams;
+                handleParam.ExStyle |= 0x02000000;      // WS_EX_COMPOSITED
+                return handleParam;
+            }
+        }
+
+        private void menuSelect_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            btnInject.Focus();
+
+            bool IsInstalled = InjectorHelper.IsTerrorInstalled() || InjectorHelper.IsMisterModzZInstalled();
+
+            if (IsInstalled && InjectorHelper.IsGTA5Running()) {
+                lblStatus.Text = "";
+                btnInject.Visible = true;
+            }
+
+            switch (menuSelect.SelectedItem.ToString())
+            {
+                case "Terror":
+                    toolStripBtnUninstall.Text = "Uninstall Terror";
+                    break;
+                case "MisterModzZ v2":
+                    toolStripBtnUninstall.Text = "Uninstall MisterModzZ";
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        //https://stackoverflow.com/questions/11817062/align-text-in-combobox
+        private void menuSelect_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            // By using Sender, one method could handle multiple ComboBoxes
+            CustomComboBox cbx = sender as CustomComboBox;
+            if (cbx != null)
+            {
+                // Always draw the background
+                e.DrawBackground();
+
+                // Drawing one of the items?
+                if (e.Index >= 0)
+                {
+                    // Set the string alignment.  Choices are Center, Near and Far
+                    StringFormat sf = new StringFormat();
+                    sf.LineAlignment = StringAlignment.Center;
+                    sf.Alignment = StringAlignment.Center;
+
+                    // Set the Brush to ComboBox ForeColor to maintain any ComboBox color settings
+                    // Assumes Brush is solid
+                    Brush brush = new SolidBrush(cbx.ForeColor);
+
+                    // If drawing highlighted selection, change brush
+                    if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
+                        brush = SystemBrushes.HighlightText;
+
+                    // Draw the string
+                    e.Graphics.DrawString(cbx.Items[e.Index].ToString(), cbx.Font, brush, e.Bounds, sf);
+                }
             }
         }
     }

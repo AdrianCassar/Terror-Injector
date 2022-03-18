@@ -27,6 +27,8 @@ using System.Threading.Tasks;
 using Terror_Injector.Injector;
 using System.Json;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace Terror_Injector
 {
@@ -35,14 +37,33 @@ namespace Terror_Injector
     /// </summary>
     public static class InjectorHelper
     {
-        public static string TerrorDocuments { get; } = @$"{Environment.GetEnvironmentVariable("USERPROFILE")}\Documents\Terror";
-        public static string TerrorAppdata { get; } = @$"{ Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}\Terror";
 
-        public static string InjectionKey { get; } = @$"{InjectorHelper.TerrorAppdata}\Injection_Key.txt";
-        public static string InstallerLogin { get; } = @$"{InjectorHelper.TerrorAppdata}\InstallerLogin.txt";
-        public static string MenuName { get; } = @$"{InjectorHelper.TerrorAppdata}\MenuName.txt";
+        private readonly static string Documents = Environment.GetEnvironmentVariable("USERPROFILE");
+        private readonly static string Appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
-        static readonly HttpClient client = new HttpClient();
+        public static string TerrorDocuments { get; } = @$"{Documents}\Documents\Terror";
+        public static string TerrorAppdata { get; } = @$"{Appdata}\Terror";
+        public static string TerrorMenuName { get; } = @$"{TerrorAppdata}\MenuName.txt";
+
+        public static string MisterModzZDocuments { get; } = @$"{Documents}\Documents\MisterModzZ";
+        public static string MisterModzZAppdata { get; } = @$"{Appdata}\MisterModzZ";
+        public static string MisterModzZMenuName { get; } = @$"{MisterModzZAppdata}\MenuName.txt";
+
+        public static string InjectionKey { get; } = @$"{TerrorAppdata}\Injection_Key.txt";
+        public static string InstallerLogin { get; } = @$"{TerrorAppdata}\InstallerLogin.txt";
+
+        public static string Username { get; } = "EJSsRSSeCSQ4YatS";
+        public static string Password { get; } = "aTtsnUAxaKvJT7YZ";
+        public static string IP { get; } = "230.191.165.66";
+        public static string Question_Ans { get; } = "9eT68JfWWJte99M2";
+
+        //username = "EJSsRSSeCSQ4YatS"
+        //password = "aTtsnUAxaKvJT7YZ"
+        //IP_Address = "230.191.165.66"
+        //VERIFICATION_QUESTION = "m2cMzr95BXvTBSfc"
+        //VERIFICATION_QUESTION_ANSWER = "9eT68JfWWJte99M2"
+
+        private static readonly HttpClient WebClient = new();
 
         #region WinAPI DllImports
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -58,21 +79,72 @@ namespace Terror_Injector
         }
 
         /// <summary>
+        /// Determines if a menu is installed.
+        /// </summary>
+        /// <returns>True if a menu is installed otherwise false.</returns>
+        private static bool IsInstalled(string documents, string menuFile)
+        {
+            bool result;
+
+            if (result = Directory.Exists(documents))
+            {
+                var dlls = new DirectoryInfo(documents).GetFiles().Where(f => IsDll(f));
+
+                result = dlls.Count() >= 1 && File.Exists(menuFile);
+            }
+
+            return result;
+        }
+
+
+        //https://stackoverflow.com/a/6309893
+        /// <summary>
+        /// Determines if a file is a DLL.
+        /// </summary>
+        /// <param name="file">The file to be checked.</param>
+        /// <returns>True if file is a DLL otherwise false.</returns>
+        public static bool IsDll(FileInfo file)
+        {
+            FileStream stream = file.OpenRead();
+
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                byte[] header = reader.ReadBytes(2); //Read MZ
+                if (header[0] != (byte)'M' && header[1] != (byte)'Z')
+                    return false;
+
+                stream.Seek(64 - 4, SeekOrigin.Begin);//read elf_new this is the offset where the IMAGE_NT_HEADER begins
+                int offset = reader.ReadInt32();
+
+                stream.Seek(offset, SeekOrigin.Begin);
+                header = reader.ReadBytes(2);
+
+                if (header[0] != (byte)'P' && header[1] != (byte)'E')
+                    return false;
+
+                stream.Seek(20, SeekOrigin.Current); //point to last word of IMAGE_FILE_HEADER
+                short readInt16 = reader.ReadInt16();
+
+                return (readInt16 & 0x2000) == 0x2000;
+            }
+        }
+
+        /// <summary>
         /// Determines if Terror is installed.
         /// </summary>
         /// <returns>True if Terror is installed otherwise false.</returns>
         public static bool IsTerrorInstalled()
         {
-            bool result;
+            return IsInstalled(TerrorDocuments, TerrorMenuName);
+        }
 
-            if (result = Directory.Exists(TerrorDocuments))
-            {
-                int count = Directory.GetDirectories(TerrorDocuments).Length + Directory.GetFiles(TerrorDocuments).Length;
-
-                result = count >= 6 && File.Exists($"{TerrorDocuments}\\{GetTerrorMenuName()}");
-            }
-
-            return result;
+        /// <summary>
+        /// Determines if MisterModzZ is installed.
+        /// </summary>
+        /// <returns>True if MisterModzZ is installed otherwise false.</returns>
+        public static bool IsMisterModzZInstalled()
+        {
+            return IsInstalled(MisterModzZDocuments, MisterModzZMenuName);
         }
 
         /// <summary>
@@ -95,7 +167,8 @@ namespace Terror_Injector
 
                 if (GTAV_Process != null)
                 {
-                    ShowWindow(GTAV_Process.MainWindowHandle, 3);
+                    //https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
+                    ShowWindow(GTAV_Process.MainWindowHandle, 5);
                     SetForegroundWindow(GTAV_Process.MainWindowHandle);
                 }
             }
@@ -105,15 +178,15 @@ namespace Terror_Injector
         /// Gets the name of the menu file.
         /// </summary>
         /// <returns>Returns the name of the menu file if it exists otherwise an empty string.</returns>
-        public static string GetTerrorMenuName()
+        private static string GetMenuName(String menuName)
         {
             string FileName = string.Empty;
 
-            if (File.Exists(MenuName))
+            if (File.Exists(menuName))
             {
                 try
                 {
-                    FileName = File.ReadAllText(MenuName).Trim();
+                    FileName = File.ReadAllText(menuName).Trim();
                 }
                 catch (Exception)
                 {
@@ -122,6 +195,24 @@ namespace Terror_Injector
             }
 
             return FileName;
+        }
+
+        /// <summary>
+        /// Gets the name of the menu file.
+        /// </summary>
+        /// <returns>Returns the name of the menu file if it exists otherwise an empty string.</returns>
+        public static string GetTerrorMenuName()
+        {
+            return GetMenuName(TerrorMenuName);
+        }
+
+        /// <summary>
+        /// Gets the name of the menu file.
+        /// </summary>
+        /// <returns>Returns the name of the menu file if it exists otherwise an empty string.</returns>
+        public static string GetMisterModzZMenuName()
+        {
+            return GetMenuName(MisterModzZMenuName);
         }
 
         /// <summary>
@@ -167,10 +258,12 @@ namespace Terror_Injector
 
             try
             {
-                string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36";
-                client.DefaultRequestHeaders.Add("User-Agent", userAgent);
+                if (WebClient.DefaultRequestHeaders.UserAgent.Count == 0) {
+                    string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36";
+                    WebClient.DefaultRequestHeaders.Add("User-Agent", userAgent);
+                }
 
-                result = (await client.GetStringAsync(uri)).Trim();
+                result = (await WebClient.GetStringAsync(uri)).Trim();
             }
             catch (Exception)
             {
@@ -191,16 +284,14 @@ namespace Terror_Injector
 
             if (File.Exists(versionFile))
             {
-                version = File.ReadAllText(versionFile).Trim();
+                version = File.ReadAllText(versionFile);
             }
             else
             {
                 if (Directory.Exists(TerrorDocuments))
                 {
-                    string versionFilev2 = Directory.GetFiles(TerrorDocuments).FirstOrDefault((file) => file.StartsWith("Version") && file.EndsWith(".txt"));
-
                     DirectoryInfo Dir = new(TerrorDocuments);
-                    FileInfo File = Dir.GetFiles("*.txt").FirstOrDefault((file) => file.Name.StartsWith("Version"));
+                    FileInfo File = Dir.GetFiles("Version ?.?.txt").FirstOrDefault();
 
                     if (File != null)
                     {
@@ -209,7 +300,7 @@ namespace Terror_Injector
                 }
             }
 
-            return version.Replace("Version ", string.Empty);
+            return version.Replace("Version ", string.Empty).Trim();
         }
 
         /// <summary>
@@ -219,15 +310,18 @@ namespace Terror_Injector
         /// <returns>True if the file is locked, otherwise false.</returns>
         private static bool IsFileLocked(FileInfo file)
         {
-            try
+            if (file.Exists)
             {
-                using FileStream fileStream = file.Open(FileMode.Open, FileAccess.Write, FileShare.None);
-            }
-            catch (IOException)
-            {
-                Debug.WriteLine("\nFileLocked");
+                try
+                {
+                    using FileStream fileStream = file.Open(FileMode.Open, FileAccess.Write, FileShare.None);
+                }
+                catch (IOException)
+                {
+                    Debug.WriteLine("\nFileLocked");
 
-                return true;
+                    return true;
+                }
             }
 
             return false;
@@ -240,6 +334,15 @@ namespace Terror_Injector
         public static bool IsTerrorInjected()
         {
             return IsTerrorInstalled() && IsFileLocked(new FileInfo($"{TerrorDocuments}\\{GetTerrorMenuName()}")) && IsGTA5Running();
+        }
+
+        /// <summary>
+        /// Determine if MisterModzZ is currently injected.
+        /// </summary>
+        /// <returns>True if injected, otherwise false.</returns>
+        public static bool IsMisterModzZInjected()
+        {
+            return IsMisterModzZInstalled() && IsFileLocked(new FileInfo($"{MisterModzZDocuments}\\{GetMisterModzZMenuName()}")) && IsGTA5Running();
         }
 
         /// <summary>
@@ -345,5 +448,51 @@ namespace Terror_Injector
 
             return AssemblyVer.CompareTo(LatestVer) < 0;
         }
+
+        public static bool SetOpenKey(int keyCode)
+        {
+            DirectoryInfo ConfigDir = new(@$"{TerrorAppdata}\Configs");
+            FileInfo Key = new(@$"{ConfigDir.FullName}\Keys.ini");
+
+            try
+            {
+                if (!ConfigDir.Exists)
+                    ConfigDir.Create();
+
+                using (StreamWriter streamWriter = new(Key.Create()))
+                {
+                    streamWriter.Write("[Hotkeys]\r\n");
+                    streamWriter.Write($"OpenKey={keyCode}");
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        //public static void GetModuleVersionId()
+        //{
+        //    Assembly assembly = Assembly.GetEntryAssembly();
+        //    Guid hashId = assembly.ManifestModule.ModuleVersionId;
+
+        //    Debug.WriteLine(hashId);
+        //}
+
+        //public static string BinaryHash()
+        //{
+        //    using (var SHA = SHA256.Create())
+        //    {
+        //        string filename = Process.GetCurrentProcess().MainModule.FileName;
+
+        //        using (var stream = File.OpenRead(filename))
+        //        {
+        //            var hash = SHA.ComputeHash(stream);
+        //            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        //        }
+        //    }
+        //}
     }
 }

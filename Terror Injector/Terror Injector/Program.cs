@@ -39,8 +39,6 @@ namespace Terror_Injector
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            SaveLicense();
-
             if (IsElevated())
                 Application.Run(new frmTerrorInjector());
             else

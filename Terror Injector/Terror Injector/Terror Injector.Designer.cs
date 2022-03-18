@@ -41,22 +41,26 @@ namespace Terror_Injector
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripBtnUninstall = new System.Windows.Forms.ToolStripButton();
             this.GitHubIcon = new System.Windows.Forms.PictureBox();
+            this.btnChangeOpenKey = new System.Windows.Forms.Button();
+            this.menuSelect = new Terror_Injector.CustomComboBox();
             this.ToolStripBtns.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.GitHubIcon)).BeginInit();
             this.SuspendLayout();
             // 
             // lblStatus
             // 
-            this.lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblStatus.AutoSize = true;
             this.lblStatus.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.lblStatus.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.lblStatus.ForeColor = System.Drawing.Color.Red;
-            this.lblStatus.Location = new System.Drawing.Point(0, 0);
+            this.lblStatus.Location = new System.Drawing.Point(207, 100);
+            this.lblStatus.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(450, 150);
+            this.lblStatus.Size = new System.Drawing.Size(37, 40);
             this.lblStatus.TabIndex = 0;
             this.lblStatus.Text = "+";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblStatus.SizeChanged += new System.EventHandler(this.lblStatus_SizeChanged);
             this.lblStatus.MouseDown += new System.Windows.Forms.MouseEventHandler(this.DragForm_MouseDown);
             // 
             // lblLatestVersion
@@ -83,7 +87,7 @@ namespace Terror_Injector
             this.lblInstallDir.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.lblInstallDir.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.lblInstallDir.ForeColor = System.Drawing.Color.Red;
-            this.lblInstallDir.Location = new System.Drawing.Point(0, 130);
+            this.lblInstallDir.Location = new System.Drawing.Point(0, 180);
             this.lblInstallDir.Name = "lblInstallDir";
             this.lblInstallDir.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
             this.lblInstallDir.Size = new System.Drawing.Size(59, 20);
@@ -114,7 +118,7 @@ namespace Terror_Injector
             this.lblDetected.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.lblDetected.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.lblDetected.ForeColor = System.Drawing.Color.Red;
-            this.lblDetected.Location = new System.Drawing.Point(0, 110);
+            this.lblDetected.Location = new System.Drawing.Point(0, 160);
             this.lblDetected.Name = "lblDetected";
             this.lblDetected.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
             this.lblDetected.Size = new System.Drawing.Size(92, 20);
@@ -128,7 +132,7 @@ namespace Terror_Injector
             this.btnInject.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnInject.Font = new System.Drawing.Font("Segoe UI", 21.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.btnInject.ForeColor = System.Drawing.Color.Red;
-            this.btnInject.Location = new System.Drawing.Point(86, 48);
+            this.btnInject.Location = new System.Drawing.Point(86, 90);
             this.btnInject.Name = "btnInject";
             this.btnInject.Size = new System.Drawing.Size(279, 55);
             this.btnInject.TabIndex = 7;
@@ -141,21 +145,21 @@ namespace Terror_Injector
             // 
             // ToolStripBtns
             // 
-            this.ToolStripBtns.AutoSize = false;
+            this.ToolStripBtns.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.ToolStripBtns.BackColor = System.Drawing.Color.Black;
             this.ToolStripBtns.ClickThrough = true;
             this.ToolStripBtns.Dock = System.Windows.Forms.DockStyle.None;
             this.ToolStripBtns.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.ToolStripBtns.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.ToolStripBtns.ImageScalingSize = new System.Drawing.Size(28, 28);
             this.ToolStripBtns.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripBtnClose,
             this.toolStripSeparator1,
             this.toolStripBtnUninstall});
-            this.ToolStripBtns.Location = new System.Drawing.Point(296, 125);
+            this.ToolStripBtns.Location = new System.Drawing.Point(283, 175);
             this.ToolStripBtns.Name = "ToolStripBtns";
             this.ToolStripBtns.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.ToolStripBtns.Size = new System.Drawing.Size(154, 25);
-            this.ToolStripBtns.Stretch = true;
+            this.ToolStripBtns.Size = new System.Drawing.Size(166, 25);
             this.ToolStripBtns.TabIndex = 9;
             this.ToolStripBtns.Text = "toolStrip1";
             this.ToolStripBtns.Visible = false;
@@ -165,13 +169,17 @@ namespace Terror_Injector
             this.toolStripBtnClose.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripBtnClose.ForeColor = System.Drawing.Color.Red;
             this.toolStripBtnClose.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripBtnClose.Margin = new System.Windows.Forms.Padding(0);
             this.toolStripBtnClose.Name = "toolStripBtnClose";
-            this.toolStripBtnClose.Size = new System.Drawing.Size(44, 22);
+            this.toolStripBtnClose.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            this.toolStripBtnClose.Size = new System.Drawing.Size(44, 25);
             this.toolStripBtnClose.Text = "Close";
             // 
             // toolStripSeparator1
             // 
+            this.toolStripSeparator1.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
             this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // toolStripBtnUninstall
@@ -179,16 +187,18 @@ namespace Terror_Injector
             this.toolStripBtnUninstall.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripBtnUninstall.ForeColor = System.Drawing.Color.Red;
             this.toolStripBtnUninstall.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripBtnUninstall.Margin = new System.Windows.Forms.Padding(0);
             this.toolStripBtnUninstall.Name = "toolStripBtnUninstall";
-            this.toolStripBtnUninstall.Size = new System.Drawing.Size(101, 22);
+            this.toolStripBtnUninstall.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            this.toolStripBtnUninstall.Size = new System.Drawing.Size(101, 25);
             this.toolStripBtnUninstall.Text = "Uninstall Terror";
-            this.toolStripBtnUninstall.TextImageRelation = System.Windows.Forms.TextImageRelation.TextBeforeImage;
             // 
             // GitHubIcon
             // 
             this.GitHubIcon.Cursor = System.Windows.Forms.Cursors.Hand;
             this.GitHubIcon.Image = global::Terror_Injector.Properties.Resources.GitHub_Mark_Light_32px;
-            this.GitHubIcon.Location = new System.Drawing.Point(418, 0);
+            this.GitHubIcon.Location = new System.Drawing.Point(417, 0);
+            this.GitHubIcon.Margin = new System.Windows.Forms.Padding(2);
             this.GitHubIcon.Name = "GitHubIcon";
             this.GitHubIcon.Size = new System.Drawing.Size(32, 32);
             this.GitHubIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
@@ -196,25 +206,70 @@ namespace Terror_Injector
             this.GitHubIcon.TabStop = false;
             this.GitHubIcon.Click += new System.EventHandler(this.GitHubIcon_Click);
             // 
+            // btnChangeOpenKey
+            // 
+            this.btnChangeOpenKey.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnChangeOpenKey.AutoSize = true;
+            this.btnChangeOpenKey.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnChangeOpenKey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnChangeOpenKey.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.btnChangeOpenKey.ForeColor = System.Drawing.Color.Red;
+            this.btnChangeOpenKey.Location = new System.Drawing.Point(190, 8);
+            this.btnChangeOpenKey.Margin = new System.Windows.Forms.Padding(0);
+            this.btnChangeOpenKey.Name = "btnChangeOpenKey";
+            this.btnChangeOpenKey.Size = new System.Drawing.Size(70, 27);
+            this.btnChangeOpenKey.TabIndex = 11;
+            this.btnChangeOpenKey.Text = "Open Key";
+            this.btnChangeOpenKey.UseVisualStyleBackColor = true;
+            this.btnChangeOpenKey.Visible = false;
+            this.btnChangeOpenKey.Click += new System.EventHandler(this.btnChangeOpenKey_Click);
+            // 
+            // menuSelect
+            // 
+            this.menuSelect.BackColor = System.Drawing.Color.Black;
+            this.menuSelect.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.menuSelect.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.menuSelect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.menuSelect.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.menuSelect.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.menuSelect.ForeColor = System.Drawing.Color.Red;
+            this.menuSelect.FormattingEnabled = true;
+            this.menuSelect.Items.AddRange(new object[] {
+            "Terror",
+            "MisterModzZ v2"});
+            this.menuSelect.Location = new System.Drawing.Point(163, 53);
+            this.menuSelect.Name = "menuSelect";
+            this.menuSelect.Size = new System.Drawing.Size(125, 26);
+            this.menuSelect.TabIndex = 13;
+            this.menuSelect.Visible = false;
+            this.menuSelect.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.menuSelect_DrawItem);
+            this.menuSelect.SelectedIndexChanged += new System.EventHandler(this.menuSelect_SelectedIndexChanged);
+            // 
             // frmTerrorInjector
             // 
+            this.AcceptButton = this.btnChangeOpenKey;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.BackColor = System.Drawing.Color.Black;
-            this.ClientSize = new System.Drawing.Size(450, 150);
+            this.CancelButton = this.btnChangeOpenKey;
+            this.ClientSize = new System.Drawing.Size(450, 200);
             this.ControlBox = false;
+            this.Controls.Add(this.menuSelect);
             this.Controls.Add(this.GitHubIcon);
-            this.Controls.Add(this.ToolStripBtns);
-            this.Controls.Add(this.btnInject);
             this.Controls.Add(this.lblInstalledVersion);
             this.Controls.Add(this.lblLatestVersion);
             this.Controls.Add(this.lblDetected);
             this.Controls.Add(this.lblInstallDir);
+            this.Controls.Add(this.ToolStripBtns);
+            this.Controls.Add(this.btnChangeOpenKey);
+            this.Controls.Add(this.btnInject);
             this.Controls.Add(this.lblStatus);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.KeyPreview = true;
             this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(464, 250);
             this.MinimizeBox = false;
             this.Name = "frmTerrorInjector";
             this.ShowInTaskbar = false;
@@ -222,6 +277,7 @@ namespace Terror_Injector
             this.Text = "Terror Injector";
             this.TopMost = true;
             this.Load += new System.EventHandler(this.Terror_Injector_LoadAsync);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmTerrorInjector_KeyDown);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.DragForm_MouseDown);
             this.ToolStripBtns.ResumeLayout(false);
             this.ToolStripBtns.PerformLayout();
@@ -244,6 +300,8 @@ namespace Terror_Injector
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton toolStripBtnUninstall;
         private System.Windows.Forms.PictureBox GitHubIcon;
+        private System.Windows.Forms.Button btnChangeOpenKey;
+        private CustomComboBox menuSelect;
     }
 }
 
