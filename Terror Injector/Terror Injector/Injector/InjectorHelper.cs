@@ -90,7 +90,7 @@ namespace Terror_Injector
             {
                 var dlls = new DirectoryInfo(documents).GetFiles().Where(f => IsDll(f));
 
-                result = dlls.Count() >= 1 && File.Exists(menuFile);
+                result = dlls.Count() >= 1; //&& File.Exists(menuFile);
             }
 
             return result;

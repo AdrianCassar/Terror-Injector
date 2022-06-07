@@ -565,8 +565,6 @@ namespace Terror_Injector
 
         private void ToolStripBtnUninstall_Click(object sender, EventArgs e)
         {
-            btnInject.Visible = false;
-
             bool uninstalled = false;
 
             switch (menuSelect.SelectedItem.ToString())
@@ -579,6 +577,8 @@ namespace Terror_Injector
                         if (!InjectorHelper.IsTerrorInjected())
                         {
                             if (uninstalled = InjectorTasks.UninstallTerror()) {
+                                btnInject.Visible = false;
+
                                 UpdateInstallDir();
                                 UpdateInstallVer();
                             }
@@ -592,8 +592,11 @@ namespace Terror_Injector
                     {
                         timer.Stop();
 
-                        if (!InjectorHelper.IsMisterModzZInjected())
+                        if (!InjectorHelper.IsMisterModzZInjected()) {
+                            btnInject.Visible = false;
+
                             uninstalled = InjectorTasks.UninstallMisterModzZ();
+                        }
                         else
                             UpdateStatusLabel("MisterModzZ currently injected.");
                     }

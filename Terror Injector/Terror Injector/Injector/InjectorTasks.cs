@@ -647,7 +647,11 @@ namespace Terror_Injector.Injector
                 catch (Exception) { }
             }
 
-            return resultContent.Equals("[\"Account has Sucsessfully been deleted\"]");
+            //["Error More then One User with your Ip found! Please Contact a Admin or change your IP and restart the Injector Programm!"]
+            bool Success = resultContent.Equals("[\"Account has Sucsessfully been deleted\"]");
+            bool Success2 = resultContent.Equals("[\"Cant find any user with your IP! Please try to Create a new one and if it still not works create a Support Ticket on the Terror Discord Server.\"]");
+
+            return Success || Success2;
         }
 
         /// <summary>
@@ -682,13 +686,7 @@ namespace Terror_Injector.Injector
 
             string resultContent = await PostAPI(url, PostData);
 
-            return resultContent.Equals("New record created successfully");
-
-            //if (resultContent == "Username Already Exits") {
-            //    return false;
-            //} else { 
-            //    return false;
-            //}
+            return resultContent.Equals("New record created successfully") || resultContent.Equals("Username Already Exits");
         }
 
         public static async Task<bool> Menu_Login()
